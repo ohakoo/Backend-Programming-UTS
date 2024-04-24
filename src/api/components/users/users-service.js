@@ -161,6 +161,28 @@ async function changePassword(userId, password) {
   return true;
 }
 
+/**
+ * Checks if there's a page at the previous page 
+ * @returns {string}
+ */
+async function hasPreviousPage(page_number) {
+  if (page_number > 1) {
+    return true;
+  }
+    return false;
+}
+ 
+/**
+ * Checks if there's a page at the next page 
+ * @returns {string}
+ */
+async function hasNextPage(page_number, total_pages) {
+  if (page_number == total_pages){
+    return false;
+  }
+    return true;
+}
+
 module.exports = {
   getUsers,
   getUser,
@@ -170,4 +192,6 @@ module.exports = {
   emailIsRegistered,
   checkPassword,
   changePassword,
+  hasPreviousPage,
+  hasNextPage
 };

@@ -1,8 +1,9 @@
 const usersService = require('./users-service');
 const { errorResponder, errorTypes } = require('../../../core/errors');
+const { concat } = require('lodash');
 
 /**
- * Handle get list of users request
+ * Handle get list of users request with pagination and filter feature
  * @param {object} request - Express request object
  * @param {object} response - Express response object
  * @param {object} next - Express route middlewares
@@ -11,11 +12,48 @@ const { errorResponder, errorTypes } = require('../../../core/errors');
 async function getUsers(request, response, next) {
   try {
     const users = await usersService.getUsers();
-    return response.status(200).json(users);
-  } catch (error) {
+
+
+    page_number = parseInt(request.query.page_number) // choose the desired page number (parseInt parses a string argument and returns it as an integer)
+    if (!page_number) {
+      page_number = 1 // (default is set to 1)
+    }
+
+    page_size = parseInt(request.query.page_size) // limits how many users shown per page (parseInt parses a string argument and returns it as an integer)
+    if (!page_size){
+      page_size = users.length // (the default will proceed to show every users' data)
+    }
+
+    const startPage = page_size*(page_number - 1); // the page that we want to check
+    const endPage = page_size*page_number; // the end of our page
+    const total_pages = Math.ceil(users.length/page_size) // shows how many pages are there (Math.ceil() rounds decimals up)
+
+    if (page_size > users.length) {
+      throw errorResponder (errorTypes.NOT_FOUND,
+        'Page size exceeds data length!'
+      )
+    }
+
+    if (page_number > total_pages) {
+      throw errorResponder (errorTypes.NOT_FOUND,
+        'Page number does not exist!'
+      )
+    }
+
+    const paginationResult = {} // every data that will be shown 
+    paginationResult.page_number = page_number 
+    paginationResult.page_size = page_size
+    paginationResult.count = users.length // total of user's data
+    paginationResult.total_pages = total_pages 
+    paginationResult.has_previous_page = await usersService.hasPreviousPage(page_number)
+    paginationResult.has_next_page = await usersService.hasNextPage(page_number, total_pages)
+    paginationResult.data = users.slice(startPage, endPage) // shows everything between startPage and endPage
+
+    return response.status(200).json(paginationResult);
+  } catch (error) { 
     return next(error);
-  }
-}
+  } 
+} 
 
 /**
  * Handle get user detail request
