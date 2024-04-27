@@ -2,10 +2,9 @@ const { User } = require('../../../models');
 
 /**
  * Get a list of users
- * @returns {Promise}
  */
 async function getUsers() {
-  return User.find({});
+  return User.find({})
 }
 
 /**
