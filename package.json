@@ -12,7 +12,7 @@
   "author": "Janson Hendryli",
   "license": "ISC",
   "dependencies": {
-    "@joi/date": "^2.1.0",
+    "@joi/date": "^2.1.1",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "celebrate": "^15.0.3",

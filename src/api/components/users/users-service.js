@@ -1,7 +1,6 @@
 const usersRepository = require('./users-repository');
 const { hashPassword, passwordMatched } = require('../../../utils/password');
 const { User } = require('../../../models');
-const { name } = require('../../../models/users-schema');
 
 /**
  * Get list of users with pagination, sort, and search feature
@@ -14,7 +13,7 @@ const { name } = require('../../../models/users-schema');
 async function getUsers(search, sort, page_number, page_size) {
   
 
-  // If sort received, then split sorts, then assign sorts in an array
+  // If sort received, then split sorts, else assign sorts in an array
   if (sort) {
    var sorts = sort.split(":")
   } else {

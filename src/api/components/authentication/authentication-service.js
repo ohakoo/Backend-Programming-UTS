@@ -18,6 +18,9 @@ async function checkLoginCredentials(email, password) {
   const userPassword = user ? user.password : '<RANDOM_PASSWORD_FILLER>';
   const passwordChecked = await passwordMatched(password, userPassword);
 
+  if (!passwordChecked) {
+    
+  }
   // Because we always check the password (see above comment), we define the
   // login attempt as successful when the `user` is found (by email) and
   // the password matches.
@@ -33,6 +36,20 @@ async function checkLoginCredentials(email, password) {
   return null;
 }
 
+// function returns 
+function getDate(){
+  const time = Date.now()
+  const date = new Date(time);
+  const year = String(date.getFullYear())
+  const month = String(date.getMonth() + 1) // january = 0, december = 11
+  const day = String(date.getDay()) 
+  const minute = String(date.getMonth())
+  const seconds = String(date.getSeconds())
+
+  return `${year}-${month}-${day} ${minute}:${seconds}`;
+}
+
 module.exports = {
   checkLoginCredentials,
+  getDate,
 };

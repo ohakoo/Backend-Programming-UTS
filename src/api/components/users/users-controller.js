@@ -1,6 +1,5 @@
 const usersService = require('./users-service');
 const { errorResponder, errorTypes } = require('../../../core/errors');
-const { concat } = require('lodash');
 
 /**
  * Handle get list of users request 
