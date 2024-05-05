@@ -1,50 +1,51 @@
-const purchasesService = require('./purchases-service')
+const productsService = require('./products-service')
 const { errorResponder, errorTypes } = require('../../../core/errors');
 
+
 /**
- * Handle get list of purchase request 
+ * Handle get list of product request 
  * @param {object} request - Express request object
  * @param {object} response - Express response object
  * @param {object} next - Express route middlewares
  * @returns {object} Response object or pass an error to the next route
  */
-async function getPurchases(request, response, next) {
+async function getProducts(request, response, next) {
   try {
 
     const page_number = parseInt(request.query.page_number)
     const page_size = parseInt(request.query.page_size)
     const search = request.query.search || "";
-    const sort = request.query.sort || "product";
+    const sort = request.query.sort || "product_name";
 
-    const purchases = await purchasesService.getPurchases(
+    const products = await productsService.getProducts(
       search,
       sort,
       page_number,
       page_size
     )
 
-    return response.status(200).json(purchases);
+    return response.status(200).json(products);
   } catch (error) { 
     return next(error);
   } 
 }
 
 /**
- * Handle get purchase detail request
+ * Handle get product detail request
  * @param {object} request - Express request object
  * @param {object} response - Express response object
  * @param {object} next - Express route middlewares
  * @returns {object} Response object or pass an error to the next route
  */
-async function getPurchase(request, response, next) {
+async function getProduct(request, response, next) {
   try {
-    const purchase = await purchasesService.getPurchase(request.params.id);
+    const product = await productsService.getProduct(request.params.id);
 
-    if (!purchase) {
+    if (!product) {
       throw errorResponder(errorTypes.UNPROCESSABLE_ENTITY, 'Unknown user');
     }
 
-    return response.status(200).json(purchase);
+    return response.status(200).json(product);
   } catch (error) {
     return next(error);
   }
@@ -52,48 +53,46 @@ async function getPurchase(request, response, next) {
 
 
 /**
- * Handle create purchase request
+ * Handle create product request
  * @param {object} request - Express request object
  * @param {object} response - Express response object
  * @param {object} next - Express route middlewares
  * @returns {object} Response object or pass an error to the next route
  */
-async function createPurchase(request, response, next) {
+async function createProduct(request, response, next) {
   try {
-      const product = request.body.product;
+      const product_name = request.body.product_name;
+      const stock = request.body.stock;
       const price = request.body.price;
-      const quantity = request.body.quantity;
-      const shipping_address = request.body.shipping_address;
-      const date_purchased = request.body.date_purchased;
 
-    const success = await purchasesService.createPurchase(product, price, quantity, shipping_address, date_purchased);
+    const success = await productsService.createProduct(product_name, stock, price);
     if (!success) {
       throw errorResponder(
         errorTypes.UNPROCESSABLE_ENTITY,
-        'Failed to create purchase'
+        'Failed to create product'
       );
     }
 
-    return response.status(200).json({ product, price, quantity, shipping_address, date_purchased });
+    return response.status(200).json({ product_name, stock, price });
   } catch (error) {
     return next(error);
   }
 }
 
 /**
- * Handle update purchase request
+ * Handle update product request
  * @param {object} request - Express request object
  * @param {object} response - Express response object
  * @param {object} next - Express route middlewares
  * @returns {object} Response object or pass an error to the next route
  */
-async function updatePurchase(request, response, next) {
+async function updateProduct(request, response, next) {
   try {
-    const product = request.body.price;
+    const product_name = request.body.product_name;
+    const stock = request.body.stock;
     const price = request.body.price;
-    const quantity = request.body.quantity;
 
-    const success = await purchasesService.updatePurchase(id, product, price, quantity);
+    const success = await productsService.updateProduct(id, product_name, stock, price);
     if (!success) {
       throw errorResponder(
         errorTypes.UNPROCESSABLE_ENTITY,
@@ -108,17 +107,17 @@ async function updatePurchase(request, response, next) {
 }
 
 /**
- * Handle delete purchase request
+ * Handle delete product request
  * @param {object} request - Express request object
  * @param {object} response - Express response object
  * @param {object} next - Express route middlewares
  * @returns {object} Response object or pass an error to the next route
  */
-async function deletePurchase(request, response, next) {
+async function deleteProduct(request, response, next) {
   try {
     const id = request.params.id;
 
-    const success = await purchasesService.deletePurchase(id);
+    const success = await productsService.deleteProduct(id);
     if (!success) {
       throw errorResponder(
         errorTypes.UNPROCESSABLE_ENTITY,
@@ -132,10 +131,45 @@ async function deletePurchase(request, response, next) {
   }
 }
 
+/**
+ * Handle purchase of an item request
+ * @param {object} request - Express request object
+ * @param {object} response - Express response object
+ * @param {object} next - Express route middlewares
+ * @returns {object} Response object or pass an error to the next route
+ */
+async function addToPurchase(request, response, next){
+try{
+  const product_id = request.params.id;
+
+
+  const product = await productsService.getProduct(product_id)
+  const quantity = request.body.quantity;
+
+  if (!product) {
+      return { success: false, message: "Product can't be found!"};
+  }
+
+  if (product.stock < quantity) {
+    return { success: false, message: "Product's stock isn't enough!"}
+  }
+  
+  const productname = product.product_name
+  const totalPrice = product.price * quantity
+  const stockLeft = product.stock - quantity
+  updateProductPostPurchase(stockLeft, product_id) // updates current product's stock in database
+  return response.status(200).json({ productname, totalPrice, stockLeft })
+  } catch (error) {
+    return next(error)
+  }
+
+}
+
 module.exports = {
-  getPurchases,
-  getPurchase,
-  createPurchase,
-  updatePurchase,
-  deletePurchase,
+  getProducts,
+  getProduct,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  addToPurchase
 };

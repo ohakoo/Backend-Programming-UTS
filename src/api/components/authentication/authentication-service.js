@@ -1,6 +1,7 @@
 const authenticationRepository = require('./authentication-repository');
 const { generateToken } = require('../../../utils/session-token');
 const { passwordMatched } = require('../../../utils/password');
+const { errorResponder, errorTypes } = require('../../../core/errors');
 
 
 // function in case time limit has reached or user has successfully logged in
@@ -53,7 +54,8 @@ async function checkLoginCredentials(email, password) {
     }  
     // message if user is still in timeout
     if (timeoutCheck) {
-      return `[${currentDateMessage}] User ${user.email} mencoba login, namun mendapat error 403 karena telah melebihi limit attempt.`
+      throw errorResponder(
+        errorTypes.FORBIDDEN, `[${currentDateMessage}] User ${user.email} mencoba login, namun mendapat error 403 karena telah melebihi limit attempt.`) 
     } 
 
     return {
@@ -71,7 +73,8 @@ async function checkLoginCredentials(email, password) {
     }
 
     if (timeoutCheck) {
-      return `[${currentDateMessage}] User ${user.email} mencoba login, namun mendapat error 403 karena telah melebihi limit attempt.`
+      throw errorResponder(
+        errorTypes.FORBIDDEN, `[${currentDateMessage}] User ${user.email} mencoba login, namun mendapat error 403 karena telah melebihi limit attempt.`) 
     } 
 
     return `[${currentDateMessage}] User ${user.email} gagal login. Attempt = ${attempts}`

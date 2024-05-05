@@ -1,5 +1,5 @@
-const purchasesRepository = require('./purchases-repository');
-const { Purchase } = require('../../../models');
+const productsRepository = require('./products-repository');
+const { Product } = require('../../../models');
 
 /**
  * Get total  that has been sold
@@ -7,14 +7,14 @@ const { Purchase } = require('../../../models');
  */
 
 /**
- * Get list of purchases with pagination. sort, and search feature
+ * Get list of products with pagination. sort, and search feature
  * @param {integer} page_number
  * @param {integer} page_size
  * @param {integer} sort
  * @param {integer} search
  * @returns {Array}
  */
-async function getPurchases(search, sort, page_number, page_size) {
+async function getProducts(search, sort, page_number, page_size) {
 
   // If sort received, then split sorts, else assign sorts in an array
   if (sort) {
@@ -35,48 +35,43 @@ async function getPurchases(search, sort, page_number, page_size) {
   // input what search[1] has received
   let searchInput = {};
   var search = search.split(":")
-   if (search[0] === "product"){
-    searchInput = {product: {$regex: search[1], $options: "i"}}; 
-  } else if (search[0] === "shipping_address"){
+   if (search[0] === "product_name"){
+    searchInput = {product_name: {$regex: search[1], $options: "i"}}; 
+  } else if (search[0] === "stock"){
     searchInput = {shipping_address: {$regex: search[1], $options: "i"}};
-  } else if (search[0] === "date_purchased"){
-    searchInput = {date_purchased: {$regex: search[1], $options: "i"}};
   } else if (search[0] === "price"){
-    searchInput = {price: {$regex: search[1], $options: "i"}};
-  } else if (search[0] === "quantity"){
-    searchInput = {quantity: {$regex: search[1], $options: "i"}}
-  }
-
-  const purchases = await Purchase.find(searchInput)
+    searchInput = {price: {$regex: search[1], $options: "i"}}
+  };
+ 
+  const products = await Product.find(searchInput)
   .limit(page_size*page_number)
   .skip(page_size*(page_number-1))
   .sort(sortBy)
 
   if (!page_size){
-    page_size = purchases.length // (the default will proceed to show every users' data)
+    page_size = products.length // (the default will proceed to show every users' data)
   }
   if (!page_number) {
     page_number = 1 // (default is set to 1)
   };
 
   // shows how many pages are there (Math.ceil() rounds decimals up)  
-  total_pages = Math.ceil(purchases.length/page_size) 
+  total_pages = Math.ceil(products.length/page_size) 
 
   // shows everything between startPage and endPage
 
   has_previous_page = await hasPreviousPage(page_number)
   has_next_page = await hasNextPage(page_number, total_pages)
-  count = purchases.length
+  count = products.length
 
   const data = [];
-  for (let i = 0; i < purchases.length; i += 1) {
-    const purchase = purchases[i];
+  for (let i = 0; i < products.length; i += 1) {
+    const product = products[i];
     data.push({
-      product: purchase.product,
-      price: purchase.price,
-      quantity: purchase.quantity,
-      shipping_address: purchase.shipping_address,
-      date_purchased: purchase.date_purchased,
+      id: product.id,
+      product_name: product.product_name,
+      stock: product.stock,
+      price: product.price,
     });
   }
 
@@ -91,43 +86,46 @@ async function getPurchases(search, sort, page_number, page_size) {
   }
   
   return results;
-} 
+}
 
 /**
- * Get purchase detail
+ * Get products detail
  * @param {string} id - User ID
  * @returns {Object}
  */
-async function getPurchase(id) {
-  const purchase = await purchasesRepository.getPurchase(id);
+async function getProduct(id) {
+  const products = await productsRepository.getProducts(id);
 
-  // Purchase not found
-  if (!purchase) {
+  // products not found
+  if (!products) {
     return null;
   }
 
   return {
-    product: purchase.product,
-    price: purchase.price,
-    quantity: purchase.quantity,
-    shipping_address: purchase.shipping_address,
-    date_purchased: purchase.date_purchased,
+    product: products.product,
+    stock: products.stock,
+    price: products.price,
   };
 }
 
 /**
- * Create new purchase
- * @param {string} product - Product's name
+ * Create new purchase request
+ * @param {string} username
+ * @param {string} product_name
+ * @param {integer} quantity
+ */
+
+/**
+ * Create new products
+ * @param {string} product_name - Product's name
+ * @param {integer} stock - Product's total quantity
  * @param {integer} price - Price's value
- * @param {integer} quantity - Product's quantity
- * @param {string} shipping_address- Receiver's address
- * @param {date_purchased} date_purchased- Date when item was purchased
  * @returns {Promise}
  */
-async function createPurchase(product, price, quantity, shipping_address, date_purchased) {
+async function createProduct(product_name, stock, price) {
 
   try {
-    await purchasesRepository.createPurchase(product, price, quantity, shipping_address, date_purchased);
+    await productsRepository.createProduct(product_name, stock, price);
   } catch (err) {
     return null;
   }
@@ -136,23 +134,23 @@ async function createPurchase(product, price, quantity, shipping_address, date_p
 }
 
 /**
- * Update existing purchase
- * @param {string} id - Purchase ID
+ * Update existing products
+ * @param {string} id - products ID
  * @param {string} product - product's name
  * @param {string} price - product's price
  * @param {string} quantity - product's quantity
  * @returns {boolean}
  */
-async function updatePurchase(id, product, price, quantity) {
-  const purchase = await purchasesRepository.getPurchase(id);
+async function updateProduct(id, product_name, stock, price) {
+  const products = await productsRepository.getProduct(id);
 
-  // Purchase not found
-  if (!purchase) {
+  // products not found
+  if (!products) {
     return null;
   }
 
   try {
-    await purchasesRepository.updatePurchase(id, product, price, quantity);
+    await productsRepository.updateProduct(id, product_name, stock, price);
   } catch (err) {
     return null;
   }
@@ -165,16 +163,16 @@ async function updatePurchase(id, product, price, quantity) {
  * @param {string} id - User ID
  * @returns {boolean}
  */
-async function deletePurchase(id) {
-  const purchase = await purchasesRepository.getPurchase(id);
+async function deleteProduct(id) {
+  const products = await productsRepository.getProduct(id);
 
   // User not found
-  if (!purchase) {
+  if (!products) {
     return null;
   }
 
   try {
-    await purchasesRepository.deletePurchase(id);
+    await productsRepository.deleteProduct(id);
   } catch (err) {
     return null;
   }
@@ -210,12 +208,18 @@ async function hasNextPage(page_number, total_pages) {
     return true;
 }
 
+async function updateProductPostPurchase(stock, id) {
+  return Product.updateOne({id},
+  { $set: {stock}})
+}
+
 module.exports = {
-  getPurchases,
-  getPurchase,
-  createPurchase,
-  updatePurchase,
-  deletePurchase,
+  getProduct,
+  getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
   hasPreviousPage,
-  hasNextPage
+  hasNextPage,
+  updateProductPostPurchase,
 }

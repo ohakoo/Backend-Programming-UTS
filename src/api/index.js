@@ -2,14 +2,14 @@ const express = require('express');
 
 const authentication = require('./components/authentication/authentication-route');
 const users = require('./components/users/users-route');
-const purchases = require('./components/purchases/purchases-route')
+const products = require('./components/products/products-route')
 
 module.exports = () => {
   const app = express.Router();
 
   authentication(app);
   users(app);
-  purchases(app);
+  products(app);
 
   return app;
 };

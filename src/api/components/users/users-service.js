@@ -39,7 +39,7 @@ async function getUsers(search, sort, page_number, page_size) {
   }
 
   const users = await User.find(searchInput)
-  .limit(page_size*page_number)
+  .limit(page_size)
   .skip(page_size*(page_number-1))
   .sort(sortBy)
 
