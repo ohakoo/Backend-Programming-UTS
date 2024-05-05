@@ -17,14 +17,7 @@ async function login(request, response, next) {
       email,
       password
     );
-
-    if (!loginSuccess) {
-      throw errorResponder(
-        errorTypes.INVALID_CREDENTIALS,
-        'Wrong email or password'
-      );
-    }
-
+    
     return response.status(200).json(loginSuccess);
   } catch (error) {
     return next(error);

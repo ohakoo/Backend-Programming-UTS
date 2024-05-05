@@ -2,6 +2,11 @@ const purchasesRepository = require('./purchases-repository');
 const { Purchase } = require('../../../models');
 
 /**
+ * Get total  that has been sold
+ * 
+ */
+
+/**
  * Get list of purchases with pagination. sort, and search feature
  * @param {integer} page_number
  * @param {integer} page_size
