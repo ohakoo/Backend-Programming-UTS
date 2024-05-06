@@ -88,6 +88,7 @@ async function createProduct(request, response, next) {
  */
 async function updateProduct(request, response, next) {
   try {
+    const id = request.params.id;
     const product_name = request.body.product_name;
     const stock = request.body.stock;
     const price = request.body.price;
@@ -139,31 +140,30 @@ async function deleteProduct(request, response, next) {
  * @returns {object} Response object or pass an error to the next route
  */
 async function addToPurchase(request, response, next){
-try{
-  const product_id = request.params.id;
+  try {
+    const id = request.params.id;
+    const product = await productsService.getProduct(id);
+    const quantity = request.body.quantity || 0;
 
+    if (!product) {
+      throw errorResponder(errorTypes.BAD_REQUEST, 'Product cannot be found!');
+    }
 
-  const product = await productsService.getProduct(product_id)
-  const quantity = request.body.quantity;
+    if (product.stock < quantity) {
+      throw errorResponder(errorTypes.BAD_REQUEST, 'Stock is less than the desired quantity!');
+    }
 
-  if (!product) {
-      return { success: false, message: "Product can't be found!"};
-  }
-
-  if (product.stock < quantity) {
-    return { success: false, message: "Product's stock isn't enough!"}
-  }
+    const productname = product.product_name
+    const totalPrice = product.price * quantity 
+    let stockLeft = product.stock - quantity 
   
-  const productname = product.product_name
-  const totalPrice = product.price * quantity
-  const stockLeft = product.stock - quantity
-  updateProductPostPurchase(stockLeft, product_id) // updates current product's stock in database
-  return response.status(200).json({ productname, totalPrice, stockLeft })
+    await productsService.updateProductPostPurchase(id, stockLeft) // updates current product's stock in database
+    return response.status(200).json({ productname, totalPrice, stockLeft })
   } catch (error) {
     return next(error)
   }
-
 }
+
 
 module.exports = {
   getProducts,

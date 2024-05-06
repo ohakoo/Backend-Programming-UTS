@@ -80,6 +80,10 @@ async function deleteProduct(id){
   return Product.deleteOne({ _id: id });
 }
 
+async function updateProductPostPurchase(id, stock) {
+  return Product.updateOne({_id: id},
+  { $set: {stock: stock}})
+}
 
 module.exports = {
   updateProduct,
@@ -87,7 +91,8 @@ module.exports = {
   createProduct,
   getProduct,
   getProducts,
-  createPurchase
+  createPurchase,
+  updateProductPostPurchase,
 }
 
 

@@ -94,7 +94,7 @@ async function getProducts(search, sort, page_number, page_size) {
  * @returns {Object}
  */
 async function getProduct(id) {
-  const products = await productsRepository.getProducts(id);
+  const products = await productsRepository.getProduct(id);
 
   // products not found
   if (!products) {
@@ -102,7 +102,7 @@ async function getProduct(id) {
   }
 
   return {
-    product: products.product,
+    product_name: products.product_name,
     stock: products.stock,
     price: products.price,
   };
@@ -208,9 +208,20 @@ async function hasNextPage(page_number, total_pages) {
     return true;
 }
 
-async function updateProductPostPurchase(stock, id) {
-  return Product.updateOne({id},
-  { $set: {stock}})
+async function updateProductPostPurchase(id, stock) {
+  const products = await productsRepository.getProduct(id); 
+
+  if (!products) {
+    return null;
+  }
+  
+  try {
+    await productsRepository.updateProductPostPurchase(id, stock);
+  } catch (err) {
+    return null;
+  }
+
+  return true;
 }
 
 module.exports = {
